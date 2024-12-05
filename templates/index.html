@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Tutma Uygulaması</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #1C1C1C;
+            padding: 20px;
+            text-align: center;
+        }
+        header h1 {
+            color: #FFF;
+            font-size: 32px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #1E1E1E;
+            border-radius: 8px;
+        }
+        .card {
+            background-color: #2A2A2A;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        .card h5 {
+            color: #FFF;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            color: #B0B0B0;
+            font-size: 14px;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            background-color: #333;
+            border: 1px solid #444;
+            border-radius: 5px;
+            color: #FFF;
+        }
+        input:focus, textarea:focus {
+            border-color: #00B0FF;
+            outline: none;
+        }
+        button {
+            background-color: #00B0FF;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #008CBA;
+        }
+        .note-item {
+            background-color: #333;
+            border: none;
+            color: #FFF;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .note-item:hover {
+            background-color: #444;
+        }
+        .note-item button {
+            background-color: #FF4D4D;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #FFF;
+            border: none;
+            cursor: pointer;
+        }
+        .note-item button:hover {
+            background-color: #FF1A1A;
+        }
+        footer {
+            background-color: #1C1C1C;
+            color: #B0B0B0;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Not Tutma Uygulaması</h1>
+</header>
+
+<div class="container">
+    <!-- Not Ekleme Formu -->
+    <div class="card">
+        <h5>Yeni Not Ekle</h5>
+        <form id="notForm">
+            <div class="form-group">
+                <label for="baslik">Başlık</label>
+                <input type="text" id="baslik" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="icerik">İçerik</label>
+                <textarea id="icerik" class="form-control" rows="3" required></textarea>
+            </div>
+            <button type="submit">Notu Ekle</button>
+        </form>
+    </div>
+
+    <!-- Not Listesi -->
+    <div class="card">
+        <h5>Kendi Notların</h5>
+        <div id="notListesi">
+            <!-- Notlar burada gösterilecek -->
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2024 Not Tutma Uygulaması</p>
+</footer>
+
+<script>
+    // Veritabanı işlemleri için örnek bir veri yapısı
+    let kullaniciNotlari = [];
+
+    // Not Ekleme
+    document.getElementById("notForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const baslik = document.getElementById("baslik").value;
+        const icerik = document.getElementById("icerik").value;
+
+        const yeniNot = {
+            id: new Date().getTime(),
+            baslik: baslik,
+            icerik: icerik
+        };
+
+        kullaniciNotlari.push(yeniNot);
+        document.getElementById("baslik").value = '';
+        document.getElementById("icerik").value = '';
+        renderNotlar();
+    });
+
+    // Notları Listeleme
+    function renderNotlar() {
+        const notListesi = document.getElementById("notListesi");
+        notListesi.innerHTML = '';
+
+        kullaniciNotlari.forEach(not => {
+            const noteItem = document.createElement("div");
+            noteItem.className = "note-item";
+            noteItem.innerHTML = `
+                <div>
+                    <strong>${not.baslik}</strong>
+                    <p>${not.icerik}</p>
+                </div>
+                <button onclick="notSil(${not.id})">Sil</button>
+            `;
+            notListesi.appendChild(noteItem);
+        });
+    }
+
+    // Not Silme
+    function notSil(notId) {
+        kullaniciNotlari = kullaniciNotlari.filter(not => not.id !== notId);
+        renderNotlar();
+    }
+</script>
+
+</body>
+</html>

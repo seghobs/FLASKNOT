@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            padding: 40px 15px;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+        }
+        .card-title {
+            color: #ffffff;
+        }
+        .card-text {
+            color: #c2c2c2;
+        }
+        .form-group input, .form-group textarea {
+            background-color: #242424;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
+        .btn-primary {
+            background-color: #303030;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .modal-content {
+            background-color: #242424;
+            color: #fff;
+        }
+        .notification {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            font-size: 16px;
+            text-align: center;
+            animation: slideUp 0.5s ease-in-out;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+        .bg-dark {
+            background-color: #1e1e1e !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="font-weight-bold">Profil</h2>
+            <a href="{{ url_for('cikis') }}" class="btn btn-outline-light">Çıkış Yap</a>
+        </div>
+        <p class="lead mb-4">Hoş geldiniz, <span class="font-weight-bold">{{ kullanici.isim }}</span></p>
+        <h3 class="font-weight-bold mb-4">Notlarınız</h3>
+
+        <!-- Not ekleme formu -->
+        <form method="POST" action="{{ url_for('not_olustur') }}" class="bg-dark p-4 rounded shadow mb-4">
+            <div class="form-group">
+                <input type="text" name="baslik" placeholder="Başlık" required class="form-control">
+            </div>
+            <div class="form-group">
+                <textarea name="icerik" placeholder="İçerik" required class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-plus mr-2"></i> Not Ekle
+            </button>
+        </form>
+
+        <!-- Notlar listesi -->
+        <div class="row">
+            {% for not_obj in notlar %}
+                <div class="col-md-4 mb-4">
+                    <div class="card" onclick="showModal({{ not_obj.id }})">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ not_obj.baslik }}</h5>
+                            <p class="card-text">Tarih: {{ not_obj.tarih.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                        </div>
+                        <div class="card-footer text-right">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        Not başarıyla eklendi!
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel"></h5>
+                    <button type="button" class="close" onclick="closeModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-icerik"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="editNote()">Düzenle</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteNote()">Sil</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script>
+        let currentNoteId = null;
+
+        function showModal(notId) {
+            const modal = $('#modal');
+            const baslik = $('#modalLabel');
+            const icerik = $('#modal-icerik');
+            currentNoteId = notId;
+
+            fetch(`/api/not/${notId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hata) {
+                        alert(data.hata);
+                    } else {
+                        baslik.text(data.baslik);
+                        icerik.text(data.icerik);
+                        modal.modal('show');
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Bir hata oluştu.');
+                });
+        }
+
+        function closeModal() {
+            $('#modal').modal('hide');
+        }
+
+        function editNote() {
+            if (currentNoteId !== null) {
+                window.location.href = `/not_guncelle/${currentNoteId}`;
+            }
+        }
+
+        function deleteNote() {
+            if (currentNoteId !== null) {
+                if (confirm('Bu notu silmek istediğinize emin misiniz?')) {
+                    fetch(`/api/not_sil/${currentNoteId}`, {
+                        method: 'POST'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Not başarıyla silindi.');
+                            location.reload(); // Yeniden yükleyerek notu güncelle
+                        } else {
+                            alert('Not silinirken bir hata oluştu.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Hata:', error);
+                        alert('Bir hata oluştu.');
+                    });
+                }
+            }
+        }
+
+        document.querySelector('form').onsubmit = function () {
+            showNotification();
+        };
+
+        function showNotification() {
+            $('#notification').fadeIn().delay(3000).fadeOut();
+        }
+    </script>
+</body>
+</html>
